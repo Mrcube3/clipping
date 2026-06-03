@@ -1868,6 +1868,7 @@ app = FastAPI(
     version="1.1.0",
     description="AI-powered 9:16 vertical clip extraction from horizontal video.",
 )
+application = app
 
 
 @app.on_event("startup")
