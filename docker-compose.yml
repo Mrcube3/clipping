@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  reframe:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - reframe_data:/data
+    environment:
+      - SMART_REFRAME_TEMP=/data
+      - LOG_LEVEL=INFO
+    # Uncomment for NVIDIA GPU (MediaPipe + NVENC hardware encoding):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu, video]
+
+volumes:
+  reframe_data:
