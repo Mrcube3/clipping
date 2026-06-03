@@ -21,6 +21,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY smart_reframe.py .
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD ["uvicorn", "smart_reframe:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+CMD ["uvicorn", "smart_reframe:app", "--host", "0.0.0.0", "--port", "7860"]
