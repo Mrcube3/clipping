@@ -167,15 +167,25 @@ def _ensure_yt_dlp() -> None:
 
 
 def _download_ytdlp_binary(dest: Path) -> None:
-    """Download the latest yt-dlp macOS binary from GitHub."""
+    """Download the latest yt-dlp binary for the current platform from GitHub."""
+    import platform as _platform
     BIN_DIR.mkdir(parents=True, exist_ok=True)
-    url = (
-        "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
-    )
+    machine = _platform.machine().lower()
+    system = _platform.system().lower()
+    if system == "darwin":
+        suffix = "_macos"
+    elif system == "linux" and machine in ("x86_64", "amd64"):
+        suffix = "_linux"
+    elif system == "linux" and machine in ("aarch64", "arm64"):
+        suffix = "_linux_aarch64"
+    else:
+        # fallback: try Linux x86_64
+        suffix = "_linux"
+    url = f"https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp{suffix}"
     logger.info("Downloading yt-dlp binary from %s", url)
     urllib.request.urlretrieve(url, str(dest))
     dest.chmod(0o755)
-    logger.info("yt-dlp binary downloaded: %s", dest)
+    logger.info("yt-dlp binary downloaded: %s (platform=%s/%s)", dest, system, machine)
 
 
 _YT_URL_RE = re.compile(
