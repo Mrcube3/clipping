@@ -121,25 +121,11 @@ YT_DLP_CMD: list[str] = []
 
 
 def _ensure_yt_dlp() -> None:
-    """Locate yt-dlp (prefer latest binary, fallback pip)."""
+    """Locate yt-dlp (prefer pip, fallback to PATH)."""
     global YT_DLP_CMD
     if YT_DLP_CMD:
         return
-    # 1. Prefer the standalone binary (bundles Python 3.12, latest yt-dlp)
-    binary_path = BIN_DIR / "yt-dlp"
-    if binary_path.is_file():
-        YT_DLP_CMD = [str(binary_path)]
-        logger.info("yt-dlp binary at: %s", binary_path)
-        return
-    # 2. Download latest binary
-    try:
-        _download_ytdlp_binary(binary_path)
-        YT_DLP_CMD = [str(binary_path)]
-        logger.info("yt-dlp binary downloaded: %s", binary_path)
-        return
-    except Exception as exc:
-        logger.warning("yt-dlp binary download failed: %s", exc)
-    # 3. Fallback: python -m yt_dlp
+    # 1. Prefer python -m yt_dlp (pip install, always latest on PyPI)
     try:
         import yt_dlp  # noqa: F401
         YT_DLP_CMD = [sys.executable, "-m", "yt_dlp"]
@@ -147,7 +133,13 @@ def _ensure_yt_dlp() -> None:
         return
     except ImportError:
         pass
-    # 4. Fallback: PATH / known paths
+    # 2. Fallback: standalone binary (macOS only, for pre-bundled yt-dlp)
+    binary_path = BIN_DIR / "yt-dlp"
+    if binary_path.is_file():
+        YT_DLP_CMD = [str(binary_path)]
+        logger.info("yt-dlp binary at: %s", binary_path)
+        return
+    # 3. Fallback: PATH / known paths
     found = shutil.which("yt-dlp")
     if found:
         YT_DLP_CMD = [found]
@@ -164,28 +156,6 @@ def _ensure_yt_dlp() -> None:
             logger.info("yt-dlp resolved at: %s", c)
             return
     logger.warning("yt-dlp not found — YouTube downloads disabled")
-
-
-def _download_ytdlp_binary(dest: Path) -> None:
-    """Download the latest yt-dlp binary for the current platform from GitHub."""
-    import platform as _platform
-    BIN_DIR.mkdir(parents=True, exist_ok=True)
-    machine = _platform.machine().lower()
-    system = _platform.system().lower()
-    if system == "darwin":
-        suffix = "_macos"
-    elif system == "linux" and machine in ("x86_64", "amd64"):
-        suffix = "_linux"
-    elif system == "linux" and machine in ("aarch64", "arm64"):
-        suffix = "_linux_aarch64"
-    else:
-        # fallback: try Linux x86_64
-        suffix = "_linux"
-    url = f"https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp{suffix}"
-    logger.info("Downloading yt-dlp binary from %s", url)
-    urllib.request.urlretrieve(url, str(dest))
-    dest.chmod(0o755)
-    logger.info("yt-dlp binary downloaded: %s (platform=%s/%s)", dest, system, machine)
 
 
 _YT_URL_RE = re.compile(
