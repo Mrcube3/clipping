@@ -226,8 +226,17 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
     logger.info("Downloading YouTube video: %s", url)
     t0 = time.perf_counter()
 
-    # Only inject browser cookies on macOS (Safari), skip on Linux.
-    cookie_args = ["--cookies-from-browser", "safari"] if sys.platform == "darwin" else []
+    # Cookies: HF secret YT_COOKIES > cookies.txt > Safari on macOS
+    cookie_args: list[str] = []
+    cookies_text = os.environ.get("YT_COOKIES")
+    if cookies_text:
+        cp = Path(f"/tmp/yt-cookies-{uuid.uuid4().hex}.txt")
+        cp.write_text(cookies_text)
+        cookie_args = ["--cookies", str(cp)]
+    elif Path("cookies.txt").is_file():
+        cookie_args = ["--cookies", "cookies.txt"]
+    elif sys.platform == "darwin":
+        cookie_args = ["--cookies-from-browser", "safari"]
 
     result = _run_ytdlp(
         "-f", "18/best[height<=720]/best",

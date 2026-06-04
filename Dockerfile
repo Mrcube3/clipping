@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libgomp1 \
     wget \
+    curl \
     ca-certificates \
     && update-ca-certificates --fresh \
     && rm -rf /var/lib/apt/lists/*
@@ -19,6 +20,10 @@ WORKDIR /app
 # Install Python deps (layer cached unless requirements.txt changes)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -U -r requirements.txt
+
+# Install deno (JS runtime required by yt-dlp for YouTube extraction)
+RUN curl -fsSL https://deno.land/install.sh | sh -s -- -y && \
+    ln -s /root/.deno/bin/deno /usr/local/bin/deno
 
 COPY smart_reframe.py .
 
