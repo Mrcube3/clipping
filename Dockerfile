@@ -19,9 +19,14 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download latest yt-dlp binary for Linux
-RUN mkdir -p /app/bin && \
-    wget -q -O /app/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux" && \
+# Download latest yt-dlp binary for the build architecture
+RUN arch=$(uname -m); \
+    case "$arch" in \
+        x86_64|amd64) suffix="_linux" ;; \
+        aarch64|arm64) suffix="_linux_aarch64" ;; \
+        *) echo "Unsupported arch: $arch"; exit 1 ;; \
+    esac; \
+    wget -q -O /app/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp${suffix}" && \
     chmod +x /app/bin/yt-dlp
 
 COPY smart_reframe.py .
