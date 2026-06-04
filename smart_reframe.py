@@ -121,11 +121,17 @@ YT_DLP_CMD: list[str] = []
 
 
 def _ensure_yt_dlp() -> None:
-    """Locate yt-dlp (prefer pip, fallback to PATH)."""
+    """Locate yt-dlp (prefer standalone binary, fallback pip)."""
     global YT_DLP_CMD
     if YT_DLP_CMD:
         return
-    # 1. Prefer python -m yt_dlp (pip install, always latest on PyPI)
+    # 1. Standalone binary (bundles Python 3.12 + OpenSSL, avoids SSL EOF bugs)
+    binary_path = BIN_DIR / "yt-dlp"
+    if binary_path.is_file():
+        YT_DLP_CMD = [str(binary_path)]
+        logger.info("yt-dlp binary at: %s", binary_path)
+        return
+    # 2. python -m yt_dlp (pip install)
     try:
         import yt_dlp  # noqa: F401
         YT_DLP_CMD = [sys.executable, "-m", "yt_dlp"]
@@ -133,13 +139,7 @@ def _ensure_yt_dlp() -> None:
         return
     except ImportError:
         pass
-    # 2. Fallback: standalone binary (macOS only, for pre-bundled yt-dlp)
-    binary_path = BIN_DIR / "yt-dlp"
-    if binary_path.is_file():
-        YT_DLP_CMD = [str(binary_path)]
-        logger.info("yt-dlp binary at: %s", binary_path)
-        return
-    # 3. Fallback: PATH / known paths
+    # 3. PATH
     found = shutil.which("yt-dlp")
     if found:
         YT_DLP_CMD = [found]
@@ -206,6 +206,7 @@ def _probe_youtube_duration(url: str) -> float:
         "--print", "duration",
         "--no-playlist",
         "--flat-playlist",
+        "--extractor-args", "youtube:player_client=web,mweb,android",
         url,
     )
     if result.returncode != 0:
@@ -244,7 +245,7 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
         "--no-playlist",
         "--force-ipv4",
         "--throttled-rate", "100K",
-        "--extractor-args", "youtube:player_client=android",
+        "--extractor-args", "youtube:player_client=web,mweb,android",
         *cookie_args,
         "-o", str(output_dir / "%(id)s.%(ext)s"),
         url,

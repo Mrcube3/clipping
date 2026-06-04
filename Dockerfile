@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 FROM python:3.11-slim-bookworm
 
-# Install system deps: FFmpeg, OpenCV libs
+# Install system deps: FFmpeg, OpenCV libs, deno prerequisites
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsm6 \
@@ -33,6 +33,17 @@ RUN arch=$(uname -m); \
     unzip -o /tmp/deno.zip -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/deno && \
     rm /tmp/deno.zip
+
+# Download yt-dlp standalone binary (bundles Python 3.12 + OpenSSL, avoids OpenSSL 3.x SSL EOF bug)
+RUN mkdir -p /app/bin && \
+    arch_yt=$(uname -m); \
+    case "$arch_yt" in \
+        x86_64|amd64) suffix="_linux" ;; \
+        aarch64|arm64) suffix="_linux_aarch64" ;; \
+        *) echo "Unsupported arch: $arch_yt"; exit 1 ;; \
+    esac; \
+    wget -q -O /app/bin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp${suffix}" && \
+    chmod +x /app/bin/yt-dlp
 
 COPY smart_reframe.py .
 
