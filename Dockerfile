@@ -22,8 +22,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -U -r requirements.txt
 
 # Install deno (JS runtime required by yt-dlp for YouTube extraction)
-RUN curl -fsSL https://deno.land/install.sh | sh -s -- -y && \
-    ln -s /root/.deno/bin/deno /usr/local/bin/deno
+RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- --yes
 
 COPY smart_reframe.py .
 
