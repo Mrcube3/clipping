@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     wget \
     ca-certificates \
+    && update-ca-certificates --fresh \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -235,6 +235,7 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
         "--no-playlist",
         "--force-ipv4",
         "--throttled-rate", "100K",
+        "--extractor-args", "youtube:player_client=android",
         *cookie_args,
         "-o", str(output_dir / "%(id)s.%(ext)s"),
         url,
