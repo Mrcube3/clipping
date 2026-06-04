@@ -20,7 +20,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download latest yt-dlp binary for the build architecture
-RUN arch=$(uname -m); \
+RUN mkdir -p /app/bin && \
+    arch=$(uname -m); \
     case "$arch" in \
         x86_64|amd64) suffix="_linux" ;; \
         aarch64|arm64) suffix="_linux_aarch64" ;; \
