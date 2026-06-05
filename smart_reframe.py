@@ -200,7 +200,7 @@ def _run_ytdlp(*args: str) -> subprocess.CompletedProcess:
 def _yt_cookie_args() -> list[str]:
     """Build --cookies arguments from YT_COOKIES env var, cookies.txt, or macOS Safari."""
     cookies_text = os.environ.get("YT_COOKIES")
-    if cookies_text:
+    if cookies_text and cookies_text.strip():
         cp = Path(f"/tmp/yt-cookies-{uuid.uuid4().hex}.txt")
         cp.write_text(cookies_text)
         return ["--cookies", str(cp)]
@@ -220,7 +220,7 @@ def _probe_youtube_duration(url: str) -> float:
         "--print", "duration",
         "--no-playlist",
         "--geo-bypass",
-        "--extractor-args", "youtube:player_client=android",
+        "--extractor-args", "youtube:player_client=android;player_skip=webpage,config,js;include_dash_manifest=False",
         *_yt_cookie_args(),
         url,
     )
@@ -251,7 +251,7 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
         "--geo-bypass",
         "--force-ipv4",
         "--throttled-rate", "100K",
-        "--extractor-args", "youtube:player_client=android",
+        "--extractor-args", "youtube:player_client=android;player_skip=webpage,config,js;include_dash_manifest=False",
         *cookie_args,
         "-o", str(output_dir / "%(id)s.%(ext)s"),
         url,
