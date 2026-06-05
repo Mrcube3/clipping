@@ -219,8 +219,8 @@ def _probe_youtube_duration(url: str) -> float:
     result = _run_ytdlp(
         "--print", "duration",
         "--no-playlist",
-        "--flat-playlist",
-        "--extractor-args", "youtube:player_client=web,mweb,android",
+        "--geo-bypass",
+        "--extractor-args", "youtube:player_client=android",
         *_yt_cookie_args(),
         url,
     )
@@ -248,9 +248,10 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
         "-f", "18/best[height<=720]/best",
         "--merge-output-format", "mp4",
         "--no-playlist",
+        "--geo-bypass",
         "--force-ipv4",
         "--throttled-rate", "100K",
-        "--extractor-args", "youtube:player_client=web,mweb,android",
+        "--extractor-args", "youtube:player_client=android",
         *cookie_args,
         "-o", str(output_dir / "%(id)s.%(ext)s"),
         url,
