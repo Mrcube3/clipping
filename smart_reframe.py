@@ -197,6 +197,20 @@ def _run_ytdlp(*args: str) -> subprocess.CompletedProcess:
     )
 
 
+def _yt_cookie_args() -> list[str]:
+    """Build --cookies arguments from YT_COOKIES env var, cookies.txt, or macOS Safari."""
+    cookies_text = os.environ.get("YT_COOKIES")
+    if cookies_text:
+        cp = Path(f"/tmp/yt-cookies-{uuid.uuid4().hex}.txt")
+        cp.write_text(cookies_text)
+        return ["--cookies", str(cp)]
+    if Path("cookies.txt").is_file():
+        return ["--cookies", "cookies.txt"]
+    if sys.platform == "darwin":
+        return ["--cookies-from-browser", "safari"]
+    return []
+
+
 def _probe_youtube_duration(url: str) -> float:
     """Get video duration (seconds) via yt-dlp --print, no download."""
     if not YT_DLP_CMD:
@@ -207,6 +221,7 @@ def _probe_youtube_duration(url: str) -> float:
         "--no-playlist",
         "--flat-playlist",
         "--extractor-args", "youtube:player_client=web,mweb,android",
+        *_yt_cookie_args(),
         url,
     )
     if result.returncode != 0:
@@ -227,17 +242,7 @@ def _download_youtube(url: str, output_dir: Path) -> Path:
     logger.info("Downloading YouTube video: %s", url)
     t0 = time.perf_counter()
 
-    # Cookies: HF secret YT_COOKIES > cookies.txt > Safari on macOS
-    cookie_args: list[str] = []
-    cookies_text = os.environ.get("YT_COOKIES")
-    if cookies_text:
-        cp = Path(f"/tmp/yt-cookies-{uuid.uuid4().hex}.txt")
-        cp.write_text(cookies_text)
-        cookie_args = ["--cookies", str(cp)]
-    elif Path("cookies.txt").is_file():
-        cookie_args = ["--cookies", "cookies.txt"]
-    elif sys.platform == "darwin":
-        cookie_args = ["--cookies-from-browser", "safari"]
+    cookie_args = _yt_cookie_args()
 
     result = _run_ytdlp(
         "-f", "18/best[height<=720]/best",
